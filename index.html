@@ -192,8 +192,7 @@
   <script>
     // Hier musst du deine eigene Web‑App‑URL einsetzen:
     const GAS_URL = 'https://script.google.com/macros/s/AKfycbz8ANgxyZpGuj-1p5diMYUkkzQKUpDNk6Rj87K8tqxMTTNIigNCNTdX1PUoqpNWY9Fz/exec';
-         let userType='', klasse='';
-    
+
     // ——— 2) Debug‑Check: einmal ping testen
     async function ping() {
       try {
@@ -254,34 +253,21 @@
       }
     }
 
-     async function requestCode() {
+    async function requestCode() {
       const err3 = document.getElementById('errorBox3');
       err3.textContent = '';
-      const vor  = document.getElementById('vorname').value.trim();
-      const init = document.getElementById('initial').value.trim();
+      const vor   = document.getElementById('vorname').value.trim();
+      const init  = document.getElementById('initial').value.trim();
       if (!vor || !init || (userType==='Schueler' && !klasse)) {
         err3.textContent = 'Alle Felder korrekt ausfüllen.';
         return;
       }
       document.getElementById('loadingOverlay').style.display = 'flex';
 
-      // Device‑Infos sammeln
-      const ua = navigator.userAgent;
-      const pl = navigator.platform;
-      const sw = window.screen.width;
-      const sh = window.screen.height;
-
       const params = new URLSearchParams({
-        action:      'generate',
-        userType, klasse,
-        vorname:     vor,
-        initial:     init,
-        userAgent:   ua,
-        platform:    pl,
-        screenWidth: sw,
-        screenHeight:sh
+        action:   'generate',
+        userType, klasse, vorname: vor, initial: init
       });
-
       try {
         const res  = await fetch(`${GAS_URL}?${params}`, { method:'GET', mode:'cors' });
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
@@ -301,6 +287,9 @@
         showStep(3);
       }
     }
+
+    // Init
+    updateProgress();
   </script>
 </body>
 </html>
