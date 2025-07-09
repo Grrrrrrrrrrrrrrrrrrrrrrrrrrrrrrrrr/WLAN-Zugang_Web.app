@@ -191,8 +191,21 @@
 
   <script>
     // Hier musst du deine eigene Web‑App‑URL einsetzen:
-    const GAS_URL = 'https://script.google.com/macros/s/YOUR_DEPLOY_ID/exec';
+    const GAS_URL = 'https://script.google.com/macros/s/AKfycbz8ANgxyZpGuj-1p5diMYUkkzQKUpDNk6Rj87K8tqxMTTNIigNCNTdX1PUoqpNWY9Fz/exec';
 
+    // ——— 2) Debug‑Check: einmal ping testen
+    async function ping() {
+      try {
+        const res = await fetch(`${GAS_URL}?action=ping`);
+        const j = await res.json();
+        console.log('Ping:', j);
+      } catch(e) {
+        console.error('Ping-Fehler', e);
+      }
+    }
+    ping(); // öffne die Konsole (F12) – du solltest {pong:true} sehen
+    
+    
     const KLASSEN = ["7A","7B","8A","8B","9A","9B","10A","10B","11A","11B","12A","12B"];
     let current=1, userType='', klasse='';
 
@@ -241,37 +254,36 @@
     }
 
     async function requestCode() {
-      const err3=document.getElementById('errorBox3');
-      err3.textContent='';
-      const vor=document.getElementById('vorname').value.trim();
-      const init=document.getElementById('initial').value.trim();
-      if(!vor||!init||(userType==='Schueler'&&!klasse)){
-        err3.textContent='Alle Felder müssen korrekt ausgefüllt sein.';
+      const err3 = document.getElementById('errorBox3');
+      err3.textContent = '';
+      const vor   = document.getElementById('vorname').value.trim();
+      const init  = document.getElementById('initial').value.trim();
+      if (!vor || !init || (userType==='Schueler' && !klasse)) {
+        err3.textContent = 'Alle Felder korrekt ausfüllen.';
         return;
       }
-      document.getElementById('loadingOverlay').style.display='flex';
-      const params=new URLSearchParams({
-        action:'generate', userType, klasse, vorname:vor, initial:init
+      document.getElementById('loadingOverlay').style.display = 'flex';
+
+      const params = new URLSearchParams({
+        action:   'generate',
+        userType, klasse, vorname: vor, initial: init
       });
       try {
-        const res=await fetch(`${GAS_URL}?${params}`,{method:'GET',mode:'cors'});
-        const json=await res.json();
-        document.getElementById('loadingOverlay').style.display='none';
-        if(!json.success){
-          err3.textContent=json.error;
+        const res  = await fetch(`${GAS_URL}?${params}`, { method:'GET', mode:'cors' });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const json = await res.json();
+        document.getElementById('loadingOverlay').style.display = 'none';
+        if (!json.success) {
+          err3.textContent = json.error;
           showStep(3);
         } else {
-          document.getElementById('codeText').textContent=json.code;
+          document.getElementById('codeText').textContent = json.code;
           showStep(4);
-          document.getElementById('copyBtn').onclick=()=>{
-            navigator.clipboard.writeText(json.code)
-              .then(()=>document.getElementById('copyBtn').textContent='Kopiert!')
-              .catch(()=>document.getElementById('copyBtn').textContent='Fehler');
-          };
         }
-      } catch(e) {
-        document.getElementById('loadingOverlay').style.display='none';
-        err3.textContent='Netzwerkfehler, bitte erneut versuchen.';
+      } catch (e) {
+        console.error('Fetch-Fehler:', e);
+        document.getElementById('loadingOverlay').style.display = 'none';
+        err3.textContent = 'Netzwerkfehler, bitte erneut versuchen.';
         showStep(3);
       }
     }
