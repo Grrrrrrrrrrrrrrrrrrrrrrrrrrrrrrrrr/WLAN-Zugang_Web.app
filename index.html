@@ -1,4 +1,3 @@
-<!-- File: index.html -->
 <!DOCTYPE html>
 <html lang="de">
 <head>
@@ -21,7 +20,7 @@
       border-radius:16px;
       box-shadow:0 4px 12px rgba(0,0,0,0.1);
       width:100%; max-width:360px;
-      overflow:hidden;
+      overflow:hidden; position:relative;
     }
     header {
       background:#0066cc; color:#fff;
@@ -67,7 +66,7 @@
       width:100%; padding:12px; margin-top:6px;
       font-size:1em; border:1px solid #ccc;
       border-radius:8px; outline:none;
-      transition:border-color 0.2s;
+      transition: border-color 0.2s;
     }
     input:focus, select:focus {
       border-color:#0066cc;
@@ -120,7 +119,7 @@
     }
     .warning {
       margin-top:12px; font-size:0.85em;
-      color:#b00020; text-align:center;
+      color:#555; text-align:center;
     }
   </style>
 </head>
@@ -135,7 +134,6 @@
       <div class="spinner" role="status" aria-label="Lade…"></div>
     </div>
 
-    <!-- Schritt‑Screens -->
     <div id="formContainer">
       <!-- 1: Wer bist du? -->
       <div class="screen active" data-step="1">
@@ -146,7 +144,7 @@
         </div>
       </div>
 
-      <!-- 2: Klasse -->
+      <!-- 2: Klasse wählen -->
       <div class="screen" data-step="2">
         <label for="klasseSelect">Klasse wählen:</label>
         <select id="klasseSelect"><option disabled selected>-- wählen --</option></select>
@@ -157,15 +155,15 @@
         <div id="errorBox"></div>
       </div>
 
-      <!-- 3: Name -->
+      <!-- 3: Name eingeben -->
       <div class="screen" data-step="3">
         <label for="vorname">Vorname (klein):</label>
         <input id="vorname" type="text" oninput="validateStep3()">
-        <label for="initial">Initiale Nachname (klein):</label>
+        <label for="initial">Nachnamen-Initiale (klein):</label>
         <input id="initial" maxlength="1" oninput="validateStep3()">
         <div class="buttons">
           <button class="btn secondary" onclick="prev()">Zurück</button>
-          <button id="btnReq" class="btn primary disabled" disabled onclick="requestCode()">Code anfordern</button>
+          <button id="btnReq" class="btn primary disabled" disabled onclick="requestCode()">Monats‑Code anfordern</button>
         </div>
         <div id="errorBox3"></div>
       </div>
@@ -184,16 +182,15 @@
           <li>Code einfügen und verbinden.</li>
           <li>Bei Problemen: Netzwerk entfernen & neu verbinden.</li>
         </ol>
-        <div class="warning">Hinweis: Pro Tag ein Code, max. 3 pro Woche.</div>
+        <div class="warning">Hinweis: Jede Klasse bekommt pro Monat einen Code.</div>
       </div>
     </div>
   </div>
 
   <script>
-    // Hier musst du deine eigene Web‑App‑URL einsetzen:
     const GAS_URL = 'https://script.google.com/macros/s/AKfycby14CgrI7ge_TnPutvT9_Jm-qdjvPrLBCcSuvXaOT9R576hRVL3Vm8KcF26TluUtVyp/exec';
 
-    // ——— 2) Debug‑Check: einmal ping testen
+    // Debug: Ping testen
     async function ping() {
       try {
         const res = await fetch(`${GAS_URL}?action=ping`);
@@ -203,73 +200,96 @@
         console.error('Ping-Fehler', e);
       }
     }
-    ping(); // öffne die Konsole (F12) – du solltest {pong:true} sehen
-    
-    
-    const KLASSEN = ["7A","7B","8A","8B","9A","9B","10A","10B","11A","11B","12A","12B"];
-    let current=1, userType='', klasse='';
+    ping();
+
+    // Alle Klassen an der Schule
+    const KLASSEN = [
+      "1BK1W","1BK2W","1BKFH","1BKSP","1BKST",
+      "2BFSA1","2BFSA2","2BFW1","2BFW2","2BKFR1","2BKFR2",
+      "BKSPIT1","BKSPIT2","BKSPIT3",
+      "BW 23",
+      "FL11","FL12","FL2","FL3",
+      "JuHe1","JuHe2",
+      "Konf",
+      "SGG11","SGG12","SGG21","SGG22","SGGE1","SGGE2"
+    ];
+
+    let current = 1, userType = '', klasse = '';
 
     function updateProgress() {
       document.getElementById('progress').style.width = ((current/4)*100) + '%';
     }
+
     function showStep(n) {
-      document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+      document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
       document.querySelector(`.screen[data-step="${n}"]`).classList.add('active');
-      current=n; updateProgress();
+      current = n; updateProgress();
     }
+
     function choose(type) {
-      userType=type;
-      if (type==='Schueler') {
-        populateKlassen(); showStep(2);
+      userType = type;
+      if (type === 'Schueler') {
+        populateKlassen();
+        showStep(2);
       } else {
         showStep(3);
       }
     }
+
     function prev() {
-      if (current===3 && userType==='Schueler') showStep(2);
-      else if (current>1) showStep(current-1);
+      if (current === 3 && userType === 'Schueler') showStep(2);
+      else if (current > 1) showStep(current - 1);
     }
+
     function populateKlassen() {
-      const sel=document.getElementById('klasseSelect');
+      const sel = document.getElementById('klasseSelect');
       sel.innerHTML = '<option disabled selected>-- wählen --</option>'
-        + KLASSEN.map(c=>`<option value="${c}">${c}</option>`).join('');
-      sel.onchange=()=>{
-        const btn=document.getElementById('btnNext2');
-        if(sel.value){ btn.disabled=false; btn.classList.remove('disabled'); klasse=sel.value; }
-        else       { btn.disabled=true; btn.classList.add('disabled'); }
+        + KLASSEN.map(c => `<option value="${c}">${c}</option>`).join('');
+      sel.onchange = () => {
+        const btn = document.getElementById('btnNext2');
+        if (sel.value) {
+          btn.disabled = false; btn.classList.remove('disabled');
+          klasse = sel.value;
+        } else {
+          btn.disabled = true; btn.classList.add('disabled');
+        }
       };
     }
+
     function nextStep(step) {
-      if(step===2 && klasse) showStep(3);
+      if (step === 2 && klasse) showStep(3);
     }
+
     function validateStep3() {
-      const v=document.getElementById('vorname').value.trim();
-      const i=document.getElementById('initial').value.trim();
-      const btn=document.getElementById('btnReq');
-      if(/^[a-z]+$/.test(v)&&/^[a-z]$/.test(i)){
-        btn.disabled=false; btn.classList.remove('disabled');
+      const v = document.getElementById('vorname').value.trim();
+      const i = document.getElementById('initial').value.trim();
+      const btn = document.getElementById('btnReq');
+      if (/^[a-z]+$/.test(v) && /^[a-z]$/.test(i)) {
+        btn.disabled = false; btn.classList.remove('disabled');
       } else {
-        btn.disabled=true; btn.classList.add('disabled');
+        btn.disabled = true; btn.classList.add('disabled');
       }
     }
 
     async function requestCode() {
       const err3 = document.getElementById('errorBox3');
       err3.textContent = '';
-      const vor   = document.getElementById('vorname').value.trim();
-      const init  = document.getElementById('initial').value.trim();
-      if (!vor || !init || (userType==='Schueler' && !klasse)) {
+      const vor = document.getElementById('vorname').value.trim();
+      const init = document.getElementById('initial').value.trim();
+      if (!vor || !init || (userType === 'Schueler' && !klasse)) {
         err3.textContent = 'Alle Felder korrekt ausfüllen.';
         return;
       }
       document.getElementById('loadingOverlay').style.display = 'flex';
 
       const params = new URLSearchParams({
-        action:   'generate',
-        userType, klasse, vorname: vor, initial: init
+        action: 'generate',
+        userType, klasse,
+        vorname: vor, initial: init
       });
+
       try {
-        const res  = await fetch(`${GAS_URL}?${params}`, { method:'GET', mode:'cors' });
+        const res = await fetch(`${GAS_URL}?${params}`, { method:'GET', mode:'cors' });
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const json = await res.json();
         document.getElementById('loadingOverlay').style.display = 'none';
@@ -279,6 +299,11 @@
         } else {
           document.getElementById('codeText').textContent = json.code;
           showStep(4);
+          document.getElementById('copyBtn').onclick = () => {
+            navigator.clipboard.writeText(json.code)
+              .then(()=> document.getElementById('copyBtn').textContent = 'Kopiert!')
+              .catch(()=> document.getElementById('copyBtn').textContent = 'Fehler');
+          };
         }
       } catch (e) {
         console.error('Fetch-Fehler:', e);
@@ -288,7 +313,7 @@
       }
     }
 
-    // Init
+    // Initialisierung
     updateProgress();
   </script>
 </body>
