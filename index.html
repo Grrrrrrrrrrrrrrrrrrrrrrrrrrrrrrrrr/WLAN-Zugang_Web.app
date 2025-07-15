@@ -1,333 +1,88 @@
-<!-- File: index.html -->
 <!DOCTYPE html>
 <html lang="de">
 <head>
   <meta charset="utf-8">
   <title>WLAN‑Zugang</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500&display=swap" rel="stylesheet">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
   <style>
-    * { box-sizing: border-box; }
-    body {
-      margin:0; padding:16px;
-      font-family:'Roboto',sans-serif;
-      background:#eef2f5;
-      display:flex; align-items:center; justify-content:center;
-      min-height:100vh;
-    }
-    .card {
-      background:#fff;
-      border-radius:16px;
-      box-shadow:0 4px 12px rgba(0,0,0,0.1);
-      width:100%; max-width:360px;
-      overflow:hidden;
-    }
-    header {
-      background:#0066cc; color:#fff;
-      text-align:center; padding:16px;
-      font-size:1.25em; font-weight:500;
-      position:relative;
-    }
-    #progress {
-      position:absolute; bottom:0; left:0;
-      height:4px; background:#005bb5;
-      transition:width 0.3s;
-    }
-    .screen {
-      padding:24px; display:none; opacity:0;
-      transition:opacity 0.3s;
-    }
-    .screen.active { display:block; opacity:1; }
-    .buttons {
-      margin-top:24px; display:flex; flex-direction:column; gap:12px;
-    }
-    .btn {
-      padding:14px; border:none; border-radius:8px;
-      font-size:1em; font-weight:500; cursor:pointer;
-      transition:opacity 0.2s;
-    }
-    .primary {
-      background:#0066cc; color:#fff;
-    }
-    .primary.disabled {
-      opacity:0.5; cursor:not-allowed;
-    }
-    .secondary {
-      background:#f5f8fc; color:#333;
-    }
-    .secondary:hover {
-      background:#e0e4ea;
-    }
-    label {
-      display:block; margin-top:16px;
-      font-size:0.95em; color:#555;
-    }
-    input, select {
-      width:100%; padding:12px; margin-top:6px;
-      font-size:1em; border:1px solid #ccc;
-      border-radius:8px; outline:none;
-      transition:border-color 0.2s;
-    }
-    input:focus, select:focus {
-      border-color:#0066cc;
-    }
-    select {
-      appearance:none;
-      background:url('data:image/svg+xml;utf8,<svg fill="%23666" height="24" viewBox="0 0 24 24" width="24" xmlns="http://www.w3.org/2000/svg"><path d="M7 10l5 5 5-5z"/></svg>') no-repeat right 12px center;
-      background-size:16px;
-    }
-    #errorBox, #errorBox3 {
-      margin-top:12px; font-size:0.9em; color:#b00020;
-      min-height:1.2em; text-align:center;
-    }
-    #loadingOverlay {
-      position:absolute; top:0; left:0;
-      width:100%; height:100%;
-      background:rgba(255,255,255,0.8);
-      display:none;
-      align-items:center; justify-content:center;
-    }
-    .spinner {
-      border:4px solid #f3f3f3;
-      border-top:4px solid #0066cc;
-      border-radius:50%; width:36px; height:36px;
-      animation:spin 1s linear infinite;
-    }
-    @keyframes spin { to { transform:rotate(360deg); } }
-    /* Ergebnis */
-    .codeCard {
-      background:#f0f8ff; border-radius:12px;
-      padding:24px 16px 16px; text-align:center;
-      margin-bottom:16px;
-      box-shadow:inset 0 0 8px rgba(0,102,204,0.1);
-    }
-    .codeText {
-      font-size:1.8em; letter-spacing:4px;
-      margin:0 0 12px; color:#0066cc; user-select:all;
-    }
-    #copyBtn {
-      display:block; margin:0 auto 16px;
-      padding:12px 24px; border:none; border-radius:6px;
-      font-size:1em; font-weight:500; cursor:pointer;
-      background:#0084ff; color:#fff;
-      transition:background 0.2s;
-    }
-    #copyBtn:hover { background:#006bb3; }
-    #resultScreen ol {
-      padding-left:20px; text-align:left;
-      margin:16px 0; color:#444; font-size:0.9em;
-    }
-    .warning {
-      margin-top:12px; font-size:0.85em;
-      color:#b00020; text-align:center;
-    }
+    body { font-family:sans-serif; padding:1rem; }
+    .hidden { display:none; }
+    .error { color:#b00020; }
+    .code { font-size:2rem; color:#0066cc; margin:1rem 0; }
   </style>
 </head>
 <body>
-  <div class="card">
-    <header>
-      WLAN‑Zugang
-      <div id="progress" style="width:25%;"></div>
-    </header>
+  <h1>WLAN‑Zugang</h1>
 
-    <div id="loadingOverlay">
-      <div class="spinner" role="status" aria-label="Lade…"></div>
+  <div id="form">
+    <label>Typ:
+      <select id="type">
+        <option value="">-- wählen --</option>
+        <option value="Schueler">Schüler:innen</option>
+        <option value="Lehrer">Lehrer:innen</option>
+      </select>
+    </label>
+    <div id="classRow" class="hidden">
+      <label>Klasse:
+        <input id="class" type="text" placeholder="z. B. 1BK1W">
+      </label>
     </div>
+    <label>Vorname (klein):
+      <input id="first" type="text">
+    </label>
+    <label>Initial (klein):
+      <input id="init" maxlength="1" type="text">
+    </label>
+    <button id="btn">Code holen</button>
+    <div id="err" class="error"></div>
+  </div>
 
-    <!-- Schritt‑Screens -->
-    <div id="formContainer">
-      <!-- 1: Wer bist du? -->
-      <div class="screen active" data-step="1">
-        <p style="text-align:center;color:#333;">Wer bist du?</p>
-        <div class="buttons">
-          <button class="btn primary" onclick="choose('Schueler')">Schüler:innen</button>
-          <button class="btn primary" onclick="choose('Lehrer')">Lehrer:innen</button>
-        </div>
-      </div>
-
-      <!-- 2: Klasse -->
-      <div class="screen" data-step="2">
-        <label for="klasseSelect">Klasse wählen:</label>
-        <select id="klasseSelect"><option disabled selected>-- wählen --</option></select>
-        <div class="buttons">
-          <button class="btn secondary" onclick="prev()">Zurück</button>
-          <button id="btnNext2" class="btn primary disabled" disabled onclick="nextStep(2)">Weiter</button>
-        </div>
-        <div id="errorBox"></div>
-      </div>
-
-      <!-- 3: Name -->
-      <div class="screen" data-step="3">
-        <label for="vorname">Vorname (klein):</label>
-        <input id="vorname" type="text" oninput="validateStep3()">
-        <label for="initial">Initiale Nachname (klein):</label>
-        <input id="initial" maxlength="1" oninput="validateStep3()">
-        <div class="buttons">
-          <button class="btn secondary" onclick="prev()">Zurück</button>
-          <button id="btnReq" class="btn primary disabled" disabled onclick="requestCode()">Code anfordern</button>
-        </div>
-        <div id="errorBox3"></div>
-      </div>
-
-      <!-- 4: Ergebnis -->
-      <div id="resultScreen" class="screen" data-step="4">
-        <div class="codeCard">
-          <p class="codeText" id="codeText">----</p>
-          <button id="copyBtn">Code kopieren</button>
-        </div>
-        <h2 style="margin-top:0;font-size:1.1em;color:#333;">So meldest du dich an:</h2>
-        <ol>
-          <li>WLAN‑Einstellungen öffnen.</li>
-          <li>Netzwerk <strong>CSS‑KA‑Gast</strong> wählen.</li>
-          <li>Login‑Maske abwarten.</li>
-          <li>Code einfügen und verbinden.</li>
-          <li>Bei Problemen: Netzwerk entfernen & neu verbinden.</li>
-        </ol>
-        <div class="warning">Hinweis: Pro Tag ein Code, max. 3 pro Woche.</div>
-      </div>
-    </div>
+  <div id="result" class="hidden">
+    <p>Dein Code:</p>
+    <p class="code" id="showCode">----</p>
+    <button id="copy">Kopieren</button>
   </div>
 
   <script>
-    // Hier musst du deine eigene Web‑App‑URL einsetzen:
-    const GAS_URL = 'https://script.google.com/macros/s/AKfycbweYp6tqfI-T0sdgxcxx8rt_jcYBarjaT_fo8vD56nlQwjEztOmt-JUuoXUxnzjP1Ka/exec';
+    const GAS = 'https://script.google.com/macros/s/AKfycbzixNGo6Jer8ZXRupEEcKUxOTHpB-eGOjWGDnoaOCT1-yr65cD_7xVosyh8mRyxGb-2/exec';
+    const typeEl  = document.getElementById('type');
+    const classEl = document.getElementById('classRow');
+    const classIn = document.getElementById('class');
+    typeEl.onchange = () => {
+      classEl.classList.toggle('hidden', typeEl.value!=='Schueler');
+    };
 
-    // ——— 2) Debug‑Check: einmal ping testen
-    async function ping() {
+    document.getElementById('btn').onclick = async () => {
+      const err = document.getElementById('err');
+      err.textContent = '';
+      const userType = typeEl.value;
+      const klasse  = classIn.value.trim();
+      const vor     = document.getElementById('first').value.trim();
+      const init    = document.getElementById('init').value.trim();
+      if (!userType)      return err.textContent='Typ wählen.';
+      if (userType==='Schueler' && !klasse)
+                           return err.textContent='Klasse fehlt.';
+      if (!/^[a-z]+$/.test(vor) || !/^[a-z]$/.test(init))
+                           return err.textContent='Name/Initiale falsch.';
+      const params = new URLSearchParams({ action:'generate', userType, klasse, vorname:vor, initial:init });
+      let res, json;
       try {
-        const res = await fetch(`${GAS_URL}?action=ping`);
-        const j = await res.json();
-        console.log('Ping:', j);
-      } catch(e) {
-        console.error('Ping-Fehler', e);
+        res = await fetch(GAS+'?'+params);
+        json = await res.json();
+      } catch {
+        return err.textContent='Netzwerk- oder Server-Fehler.';
       }
-    }
-    ping(); // öffne die Konsole (F12) – du solltest {pong:true} sehen
-    
-    
-    const KLASSEN = ["1BK1W","1BK2W","1BKFH","1BKSP","1BKST","2BFSA1","2BFSA2","2BFW1","2BFW2","2BKFR1","2BKFR2","BKSPIT1", "BKSPIT2", "BKSPIT3", "BW 23", "FL11", "FL12", "FL2", "FL3", "JuHe1", "JuHe2", "Konf", "SGG11", "SGG12", "SGG21", "SGG22", "SGGE1", "SGGE2"];
-    let current=1, userType='', klasse='';
-
-    function updateProgress() {
-      document.getElementById('progress').style.width = ((current/4)*100) + '%';
-    }
-    function showStep(n) {
-      document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
-      document.querySelector(`.screen[data-step="${n}"]`).classList.add('active');
-      current=n; updateProgress();
-    }
-    function choose(type) {
-      userType=type;
-      if (type==='Schueler') {
-        populateKlassen(); showStep(2);
-      } else {
-        showStep(3);
+      if (!json.success) {
+        err.textContent = json.error;
+        return;
       }
-    }
-    function prev() {
-      if (current===3 && userType==='Schueler') showStep(2);
-      else if (current>1) showStep(current-1);
-    }
-    function populateKlassen() {
-      const sel=document.getElementById('klasseSelect');
-      sel.innerHTML = '<option disabled selected>-- wählen --</option>'
-        + KLASSEN.map(c=>`<option value="${c}">${c}</option>`).join('');
-      sel.onchange=()=>{
-        const btn=document.getElementById('btnNext2');
-        if(sel.value){ btn.disabled=false; btn.classList.remove('disabled'); klasse=sel.value; }
-        else       { btn.disabled=true; btn.classList.add('disabled'); }
+      document.getElementById('showCode').textContent = json.code;
+      document.getElementById('form').classList.add('hidden');
+      document.getElementById('result').classList.remove('hidden');
+      document.getElementById('copy').onclick = () => {
+        navigator.clipboard.writeText(json.code);
       };
-    }
-    function nextStep(step) {
-      if(step===2 && klasse) showStep(3);
-    }
-    function validateStep3() {
-      const v=document.getElementById('vorname').value.trim();
-      const i=document.getElementById('initial').value.trim();
-      const btn=document.getElementById('btnReq');
-      if(/^[a-z]+$/.test(v)&&/^[a-z]$/.test(i)){
-        btn.disabled=false; btn.classList.remove('disabled');
-      } else {
-        btn.disabled=true; btn.classList.add('disabled');
-      }
-    }
-
-  async function requestCode() {
-  const errBox = document.getElementById('errorBox3');
-  errBox.textContent = '';
-
-  const vor = document.getElementById('vorname').value.trim();
-  const init = document.getElementById('initial').value.trim();
-  if (!vor || !init || (userType==='Schueler' && !klasse)) {
-    errBox.textContent = 'Bitte alle Felder korrekt ausfüllen.';
-    return;
-  }
-
-  document.getElementById('loadingOverlay').style.display = 'flex';
-
-  const params = new URLSearchParams({
-    action:   'generate',
-    userType, klasse,
-    vorname:  vor,
-    initial:  init
-  });
-  const url = `${GAS_URL}?${params}`;
-  console.log('▶️ Fetching URL:', url);
-
-  let res, text, json;
-  try {
-    // 1) Request senden
-    res = await fetch(url, { method: 'GET' });
-    console.log('◀️ HTTP Status:', res.status, res.statusText);
-
-    // 2) Body als Text lesen
-    text = await res.text();
-    console.log('📄 Raw Response:', text);
-
-  } catch (networkErr) {
-    console.error('🔌 Network Error:', networkErr);
-    document.getElementById('loadingOverlay').style.display = 'none';
-    errBox.textContent = 'Verbindungsfehler. Bitte prüfe Netzwerk und Web‑App‑URL.';
-    return;
-  }
-
-  // 3) JSON parsen
-  try {
-    json = JSON.parse(text);
-  } catch (parseErr) {
-    console.error('📉 JSON-Parse-Error:', parseErr);
-    document.getElementById('loadingOverlay').style.display = 'none';
-    errBox.textContent = 'Ungültige Server-Antwort. (Kein JSON)';
-    return;
-  }
-
-  // 4) Response auswerten
-  document.getElementById('loadingOverlay').style.display = 'none';
-
-  if (!res.ok) {
-    console.error('💥 Server-Error:', res.status, json);
-    errBox.textContent = `Server-Fehler ${res.status}: ${json.error || res.statusText}`;
-    return;
-  }
-
-  if (!json.success) {
-    console.warn('🚫 App-Error:', json.error);
-    errBox.textContent = json.error;
-    return;
-  }
-
-  // 5) Endlich: Code anzeigen
-  document.getElementById('codeText').textContent = json.code;
-  showStep(4);
-  document.getElementById('copyBtn').onclick = () => {
-    navigator.clipboard.writeText(json.code)
-      .then(() => document.getElementById('copyBtn').textContent = 'Kopiert!')
-      .catch(()=> document.getElementById('copyBtn').textContent = 'Fehler');
-  };
-}
-
-
-  // 4) Init
-  updateProgress();
-</script>
+    };
+  </script>
+</body>
+</html>
