@@ -253,64 +253,62 @@
       }
     }
 
-    async function requestCode() {
-    const err3 = document.getElementById('errorBox3');
-    err3.textContent = '';
+    async function requestCode(){
+    const errBox = document.getElementById('errorBox3');
+    errBox.textContent = '';
     const vor = document.getElementById('vorname').value.trim();
     const init = document.getElementById('initial').value.trim();
-    if (!vor || !init || (userType==='Schueler' && !klasse)) {
-      err3.textContent = 'Alle Felder korrekt ausfüllen.';
+    if (!vor||!init||(userType==='Schueler'&&!klasse)){
+      errBox.textContent = 'Bitte alle Felder korrekt ausfüllen.';
       return;
     }
-    document.getElementById('loadingOverlay').style.display = 'flex';
+    document.getElementById('loadingOverlay').style.display='flex';
 
     const params = new URLSearchParams({
-      action: 'generate',
+      action:   'generate',
       userType, klasse,
-      vorname: vor,
-      initial: init
+      vorname:  vor,
+      initial:  init
     });
     const url = `${GAS_URL}?${params}`;
-    console.log('🔗 Requesting URL:', url);
+    console.log('==> Request:',url);
 
     try {
-      // einfacher GET ohne mode:'cors'
       const res = await fetch(url);
-      console.log('📥 Status:', res.status, res.statusText);
       const text = await res.text();
-      console.log('📝 Raw response:', text);
+      console.log('Status',res.status, res.statusText,'| Body:',text);
 
       let json;
-      try { json = JSON.parse(text); }
-      catch(e){ throw new Error('Invalid JSON: '+e); }
+      try { json=JSON.parse(text); }
+      catch(_){ throw new Error('Ungültige Server-Antwort.'); }
 
-      document.getElementById('loadingOverlay').style.display = 'none';
+      // lade-Overlay weg
+      document.getElementById('loadingOverlay').style.display='none';
 
       if (!res.ok) {
-        console.error('Server error body:', json);
-        throw new Error('Server-Error '+res.status);
+        errBox.textContent = `Server-Fehler (${res.status}). Bitte später erneut probieren.`;
+        return;
+      }
+      if (!json.success) {
+        errBox.textContent = json.error || 'Unbekannter Fehler.';
+        return;
       }
 
-      if (!json.success) {
-        err3.textContent = json.error;
-        showStep(3);
-      } else {
-        document.getElementById('codeText').textContent = json.code;
-        showStep(4);
-        document.getElementById('copyBtn').onclick = () => {
-          navigator.clipboard.writeText(json.code)
-            .then(()=> document.getElementById('copyBtn').textContent = 'Kopiert!')
-            .catch(()=> document.getElementById('copyBtn').textContent = 'Fehler');
-        };
-      }
-    } catch (e) {
-      console.error('💥 Fetch-Fehler:', e);
-      document.getElementById('loadingOverlay').style.display = 'none';
-      err3.textContent = 'Netzwerkfehler, bitte erneut versuchen.';
-      showStep(3);
+      // Erfolg!
+      document.getElementById('codeText').textContent = json.code;
+      showStep(4);
+      document.getElementById('copyBtn').onclick = ()=> {
+        navigator.clipboard.writeText(json.code)
+          .then(()=> document.getElementById('copyBtn').textContent='Kopiert!')
+          .catch(()=> document.getElementById('copyBtn').textContent='Fehler');
+      };
+    } catch(e) {
+      console.error('Fetch-Exception:',e);
+      document.getElementById('loadingOverlay').style.display='none';
+      errBox.textContent = 'Verbindungsfehler. Bitte prüfe Netzwerk und URL.';
     }
   }
 
-  // Initialisierung
+  // 4) Init
   updateProgress();
 </script>
