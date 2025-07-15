@@ -253,61 +253,80 @@
       }
     }
 
-    async function requestCode(){
-    const errBox = document.getElementById('errorBox3');
-    errBox.textContent = '';
-    const vor = document.getElementById('vorname').value.trim();
-    const init = document.getElementById('initial').value.trim();
-    if (!vor||!init||(userType==='Schueler'&&!klasse)){
-      errBox.textContent = 'Bitte alle Felder korrekt ausfüllen.';
-      return;
-    }
-    document.getElementById('loadingOverlay').style.display='flex';
+  async function requestCode() {
+  const errBox = document.getElementById('errorBox3');
+  errBox.textContent = '';
 
-    const params = new URLSearchParams({
-      action:   'generate',
-      userType, klasse,
-      vorname:  vor,
-      initial:  init
-    });
-    const url = `${GAS_URL}?${params}`;
-    console.log('==> Request:',url);
-
-    try {
-      const res = await fetch(url);
-      const text = await res.text();
-      console.log('Status',res.status, res.statusText,'| Body:',text);
-
-      let json;
-      try { json=JSON.parse(text); }
-      catch(_){ throw new Error('Ungültige Server-Antwort.'); }
-
-      // lade-Overlay weg
-      document.getElementById('loadingOverlay').style.display='none';
-
-      if (!res.ok) {
-        errBox.textContent = `Server-Fehler (${res.status}). Bitte später erneut probieren.`;
-        return;
-      }
-      if (!json.success) {
-        errBox.textContent = json.error || 'Unbekannter Fehler.';
-        return;
-      }
-
-      // Erfolg!
-      document.getElementById('codeText').textContent = json.code;
-      showStep(4);
-      document.getElementById('copyBtn').onclick = ()=> {
-        navigator.clipboard.writeText(json.code)
-          .then(()=> document.getElementById('copyBtn').textContent='Kopiert!')
-          .catch(()=> document.getElementById('copyBtn').textContent='Fehler');
-      };
-    } catch(e) {
-      console.error('Fetch-Exception:',e);
-      document.getElementById('loadingOverlay').style.display='none';
-      errBox.textContent = 'Verbindungsfehler. Bitte prüfe Netzwerk und URL.';
-    }
+  const vor = document.getElementById('vorname').value.trim();
+  const init = document.getElementById('initial').value.trim();
+  if (!vor || !init || (userType==='Schueler' && !klasse)) {
+    errBox.textContent = 'Bitte alle Felder korrekt ausfüllen.';
+    return;
   }
+
+  document.getElementById('loadingOverlay').style.display = 'flex';
+
+  const params = new URLSearchParams({
+    action:   'generate',
+    userType, klasse,
+    vorname:  vor,
+    initial:  init
+  });
+  const url = `${GAS_URL}?${params}`;
+  console.log('▶️ Fetching URL:', url);
+
+  let res, text, json;
+  try {
+    // 1) Request senden
+    res = await fetch(url, { method: 'GET' });
+    console.log('◀️ HTTP Status:', res.status, res.statusText);
+
+    // 2) Body als Text lesen
+    text = await res.text();
+    console.log('📄 Raw Response:', text);
+
+  } catch (networkErr) {
+    console.error('🔌 Network Error:', networkErr);
+    document.getElementById('loadingOverlay').style.display = 'none';
+    errBox.textContent = 'Verbindungsfehler. Bitte prüfe Netzwerk und Web‑App‑URL.';
+    return;
+  }
+
+  // 3) JSON parsen
+  try {
+    json = JSON.parse(text);
+  } catch (parseErr) {
+    console.error('📉 JSON-Parse-Error:', parseErr);
+    document.getElementById('loadingOverlay').style.display = 'none';
+    errBox.textContent = 'Ungültige Server-Antwort. (Kein JSON)';
+    return;
+  }
+
+  // 4) Response auswerten
+  document.getElementById('loadingOverlay').style.display = 'none';
+
+  if (!res.ok) {
+    console.error('💥 Server-Error:', res.status, json);
+    errBox.textContent = `Server-Fehler ${res.status}: ${json.error || res.statusText}`;
+    return;
+  }
+
+  if (!json.success) {
+    console.warn('🚫 App-Error:', json.error);
+    errBox.textContent = json.error;
+    return;
+  }
+
+  // 5) Endlich: Code anzeigen
+  document.getElementById('codeText').textContent = json.code;
+  showStep(4);
+  document.getElementById('copyBtn').onclick = () => {
+    navigator.clipboard.writeText(json.code)
+      .then(() => document.getElementById('copyBtn').textContent = 'Kopiert!')
+      .catch(()=> document.getElementById('copyBtn').textContent = 'Fehler');
+  };
+}
+
 
   // 4) Init
   updateProgress();
