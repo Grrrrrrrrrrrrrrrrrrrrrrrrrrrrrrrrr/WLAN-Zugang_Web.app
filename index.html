@@ -253,40 +253,66 @@
       }
     }
 
-    async function requestCode() {
-      const err3 = document.getElementById('errorBox3');
-      err3.textContent = '';
-      const vor   = document.getElementById('vorname').value.trim();
-      const init  = document.getElementById('initial').value.trim();
-      if (!vor || !init || (userType==='Schueler' && !klasse)) {
-        err3.textContent = 'Alle Felder korrekt ausfüllen.';
-        return;
-      }
-      document.getElementById('loadingOverlay').style.display = 'flex';
+  async function requestCode() {
+  const err3 = document.getElementById('errorBox3');
+  err3.textContent = '';
+  const vor   = document.getElementById('vorname').value.trim();
+  const init  = document.getElementById('initial').value.trim();
+  if (!vor || !init || (userType==='Schueler' && !klasse)) {
+    err3.textContent = 'Alle Felder korrekt ausfüllen.';
+    return;
+  }
+  document.getElementById('loadingOverlay').style.display = 'flex';
 
-      const params = new URLSearchParams({
-        action:   'generate',
-        userType, klasse, vorname: vor, initial: init
-      });
-      try {
-        const res  = await fetch(`${GAS_URL}?${params}`, { method:'GET', mode:'cors' });
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        const json = await res.json();
-        document.getElementById('loadingOverlay').style.display = 'none';
-        if (!json.success) {
-          err3.textContent = json.error;
-          showStep(3);
-        } else {
-          document.getElementById('codeText').textContent = json.code;
-          showStep(4);
-        }
-      } catch (e) {
-        console.error('Fetch-Fehler:', e);
-        document.getElementById('loadingOverlay').style.display = 'none';
-        err3.textContent = 'Netzwerkfehler, bitte erneut versuchen.';
-        showStep(3);
-      }
+  const params = new URLSearchParams({
+    action:   'generate',
+    userType, klasse, vorname: vor, initial: init
+  });
+  const url = `${GAS_URL}?${params}`;
+  console.log('▶️ Fetching URL:', url);
+
+  try {
+    const res  = await fetch(url, { method:'GET', mode:'cors' });
+    console.log('◀️ HTTP Status:', res.status, res.statusText);
+    const text = await res.text();
+    console.log('📄 Raw Response:', text);
+    let json;
+    try {
+      json = JSON.parse(text);
+      console.log('🔍 Parsed JSON:', json);
+    } catch(parseErr) {
+      console.error('❌ JSON-Parse-Error:', parseErr);
+      err3.textContent = 'Ungültige Server-Antwort (kein JSON).';
+      document.getElementById('loadingOverlay').style.display = 'none';
+      return;
     }
+    document.getElementById('loadingOverlay').style.display = 'none';
+
+    if (!res.ok) {
+      console.error('💥 Server-Error:', res.status, json);
+      err3.textContent = `Server-Fehler ${res.status}: ${json.error||res.statusText}`;
+      showStep(3);
+      return;
+    }
+    if (!json.success) {
+      console.warn('🚫 App-Error:', json.error);
+      err3.textContent = json.error;
+      showStep(3);
+      return;
+    }
+
+    // alles gut → Ergebnis anzeigen
+    document.getElementById('codeText').textContent = json.code;
+    console.log('✅ Erfolg, zeige Screen 4');
+    showStep(4);
+  } catch (e) {
+    console.error('🔗 Fetch-Fehler:', e);
+    document.getElementById('loadingOverlay').style.display = 'none';
+    err3.textContent = 'Netzwerkfehler, bitte erneut versuchen.';
+    showStep(3);
+  }
+}
+
 
     // Init
     updateProgress();
