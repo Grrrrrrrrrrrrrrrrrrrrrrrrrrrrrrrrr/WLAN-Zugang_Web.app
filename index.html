@@ -194,140 +194,62 @@
     const GAS_URL = 'https://script.google.com/macros/s/AKfycbwv95JEAF7PTcmLRs3KESoNQ71l4Z-H4qWyKaPV4xfY29NUpRW8GxixiFnkR2gKFHiB/exec';
 
     // ——— 2) Debug‑Check: einmal ping testen
-    async function ping() {
-      try {
-        const res = await fetch(`${GAS_URL}?action=ping`);
-        const j = await res.json();
-        console.log('Ping:', j);
-      } catch(e) {
-        console.error('Ping-Fehler', e);
-      }
+     async function ping() {
+    try {
+      const r = await fetch(`${GAS_URL}?action=ping`);
+      console.log('Ping‑Response:', await r.json());
+    } catch (e) {
+      console.error('Ping‑Error:', e);
     }
-    ping(); // öffne die Konsole (F12) – du solltest {pong:true} sehen
-    
-    
-    const KLASSEN = ["1BK1W","1BK2W","1BKFH","1BKSP","1BKST","2BFSA1","2BFSA2","2BFW1","2BFW2","2BKFR1","2BKFR2","BKSPIT1", "BKSPIT2", "BKSPIT3", "BW 23", "FL11", "FL12", "FL2", "FL3", "JuHe1", "JuHe2", "Konf", "SGG11", "SGG12", "SGG21", "SGG22", "SGGE1", "SGGE2"];
-    let current=1, userType='', klasse='';
+  }
+  ping();
 
-    function updateProgress() {
-      document.getElementById('progress').style.width = ((current/4)*100) + '%';
-    }
-    function showStep(n) {
-      document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
-      document.querySelector(`.screen[data-step="${n}"]`).classList.add('active');
-      current=n; updateProgress();
-    }
-    function choose(type) {
-      userType=type;
-      if (type==='Schueler') {
-        populateKlassen(); showStep(2);
-      } else {
-        showStep(3);
-      }
-    }
-    function prev() {
-      if (current===3 && userType==='Schueler') showStep(2);
-      else if (current>1) showStep(current-1);
-    }
-    function populateKlassen() {
-      const sel=document.getElementById('klasseSelect');
-      sel.innerHTML = '<option disabled selected>-- wählen --</option>'
-        + KLASSEN.map(c=>`<option value="${c}">${c}</option>`).join('');
-      sel.onchange=()=>{
-        const btn=document.getElementById('btnNext2');
-        if(sel.value){ btn.disabled=false; btn.classList.remove('disabled'); klasse=sel.value; }
-        else       { btn.disabled=true; btn.classList.add('disabled'); }
-      };
-    }
-    function nextStep(step) {
-      if(step===2 && klasse) showStep(3);
-    }
-    function validateStep3() {
-      const v=document.getElementById('vorname').value.trim();
-      const i=document.getElementById('initial').value.trim();
-      const btn=document.getElementById('btnReq');
-      if(/^[a-z]+$/.test(v)&&/^[a-z]$/.test(i)){
-        btn.disabled=false; btn.classList.remove('disabled');
-      } else {
-        btn.disabled=true; btn.classList.add('disabled');
-      }
-    }
-
+  // Generischer Request-Code‑Flow
   async function requestCode() {
-  const errBox = document.getElementById('errorBox3');
-  errBox.textContent = '';
+    const errBox = document.getElementById('errorBox3');
+    errBox.textContent = '';
+    document.getElementById('loadingOverlay').style.display = 'flex';
 
-  const vor = document.getElementById('vorname').value.trim();
-  const init = document.getElementById('initial').value.trim();
-  if (!vor || !init || (userType==='Schueler' && !klasse)) {
-    errBox.textContent = 'Bitte alle Felder korrekt ausfüllen.';
-    return;
-  }
+    const params = new URLSearchParams({ action:'generate' });
+    const url = `${GAS_URL}?${params}`;
+    console.log('Fetching:', url);
 
-  document.getElementById('loadingOverlay').style.display = 'flex';
+    let res, text, json;
+    try {
+      res  = await fetch(url);
+      text = await res.text();
+      console.log('Status:', res.status, '| Body:', text);
+    } catch (netErr) {
+      console.error('Network Error:', netErr);
+      errBox.textContent = 'Netzwerkfehler beim Kontakt zum Server.';
+      document.getElementById('loadingOverlay').style.display = 'none';
+      return;
+    }
 
-  const params = new URLSearchParams({
-    action:   'generate',
-    userType, klasse,
-    vorname:  vor,
-    initial:  init
-  });
-  const url = `${GAS_URL}?${params}`;
-  console.log('▶️ Fetching URL:', url);
+    try {
+      json = JSON.parse(text);
+    } catch (parseErr) {
+      console.error('JSON Parse Error:', parseErr);
+      errBox.textContent = 'Ungültige Antwort vom Server.';
+      document.getElementById('loadingOverlay').style.display = 'none';
+      return;
+    }
 
-  let res, text, json;
-  try {
-    // 1) Request senden
-    res = await fetch(url, { method: 'GET' });
-    console.log('◀️ HTTP Status:', res.status, res.statusText);
-
-    // 2) Body als Text lesen
-    text = await res.text();
-    console.log('📄 Raw Response:', text);
-
-  } catch (networkErr) {
-    console.error('🔌 Network Error:', networkErr);
     document.getElementById('loadingOverlay').style.display = 'none';
-    errBox.textContent = 'Verbindungsfehler. Bitte prüfe Netzwerk und Web‑App‑URL.';
-    return;
+    if (!res.ok) {
+      errBox.textContent = `Server-Fehler ${res.status}`;
+      return;
+    }
+    if (!json.success) {
+      errBox.textContent = json.error || 'Unbekannter Fehler.';
+      return;
+    }
+
+    // Erfolg: Zeige den Test‑Code
+    document.getElementById('codeText').textContent = json.code;
+    showStep(4);
   }
 
-  // 3) JSON parsen
-  try {
-    json = JSON.parse(text);
-  } catch (parseErr) {
-    console.error('📉 JSON-Parse-Error:', parseErr);
-    document.getElementById('loadingOverlay').style.display = 'none';
-    errBox.textContent = 'Ungültige Server-Antwort. (Kein JSON)';
-    return;
-  }
-
-  // 4) Response auswerten
-  document.getElementById('loadingOverlay').style.display = 'none';
-
-  if (!res.ok) {
-    console.error('💥 Server-Error:', res.status, json);
-    errBox.textContent = `Server-Fehler ${res.status}: ${json.error || res.statusText}`;
-    return;
-  }
-
-  if (!json.success) {
-    console.warn('🚫 App-Error:', json.error);
-    errBox.textContent = json.error;
-    return;
-  }
-
-  // 5) Endlich: Code anzeigen
-  document.getElementById('codeText').textContent = json.code;
-  showStep(4);
-  document.getElementById('copyBtn').onclick = () => {
-    navigator.clipboard.writeText(json.code)
-      .then(() => document.getElementById('copyBtn').textContent = 'Kopiert!')
-      .catch(()=> document.getElementById('copyBtn').textContent = 'Fehler');
-  };
-}
-
-
-  // 4) Init
-  updateProgress();
+  // Hier bindest du requestCode() an deinen Button:
+  document.getElementById('btnReq').onclick = requestCode;
 </script>
