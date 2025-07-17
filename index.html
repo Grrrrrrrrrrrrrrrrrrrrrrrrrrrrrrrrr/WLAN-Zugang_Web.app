@@ -2,7 +2,7 @@
 <html lang="de">
 <head>
   <meta charset="utf-8">
-  <title>WLAN-Zugang</title>
+  <title>WLAN‑Zugang</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500&display=swap" rel="stylesheet">
@@ -168,7 +168,7 @@
 <body>
   <div class="card">
     <header>
-      WLAN-Zugang
+      WLAN‑Zugang
       <div id="progress" style="width:25%;"></div>
     </header>
 
@@ -223,9 +223,9 @@
         </div>
         <h2 style="margin-top:0;font-size:1.1em;color:var(--text);">So meldest du dich an:</h2>
         <ol>
-          <li>WLAN-Einstellungen öffnen.</li>
-          <li>Netzwerk <strong>CSS-KA-Gast</strong> wählen.</li>
-          <li>auf Login-Seite warten.</li>
+          <li>WLAN‑Einstellungen öffnen.</li>
+          <li>Netzwerk <strong>CSS‑KA‑Gast</strong> wählen.</li>
+          <li>auf Login‑Seite warten.</li>
           <li>Code einfügen und verbinden.</li>
           <li>Bei Problemen: Netzwerk entfernen/ignorieren & neu verbinden.</li>
         </ol>
@@ -236,14 +236,16 @@
   </div>
 
   <script>
-    const KLASSEN = ["1BK1W","1BK2W","1BKFH","1BKSP","1BKST",
+    const KLASSEN = [
+      "1BK1W","1BK2W","1BKFH","1BKSP","1BKST",
       "2BFSA1","2BFSA2","2BFW1","2BFW2","2BKFR1","2BKFR2",
       "BKSPIT1","BKSPIT2","BKSPIT3","BW 23",
       "FL11","FL12","FL2","FL3",
       "JuHe1","JuHe2",
       "Konf",
-      "SGG11","SGG12","SGG21","SGG22","SGGE1","SGGE2"];
-    const API_URL = 'https://script.google.com/macros/s/AKfycbyuYuLXT-xfBmbhcbBuAEi8qXY3XjIts7B0D80qHaziAiNL2bXRsG8-i9FEZbbVA_5Wrg/exec';
+      "SGG11","SGG12","SGG21","SGG22","SGGE1","SGGE2"
+    ];
+    const API_URL = 'https://script.google.com/macros/s/AKfycbyuYuLXT-xfBmbhcbBuAEi8qXY3XjIts7B0D80qHaziAiNL2bXRsG8-i9FEZbbVA_5Wrg/exec';  // URL ersetzen
     let mode = '', step = 1;
 
     document.addEventListener('DOMContentLoaded', () => {
@@ -273,12 +275,13 @@
     }
 
     function validate() {
-      // Fehlermeldung zurücksetzen
+      // Fehlermeldungen zurücksetzen
       document.getElementById('errorBox3').textContent = '';
       const v = document.getElementById('vorname').value.trim();
       const i = document.getElementById('initial').value.trim();
-      const nameOk = v.length > 0 && !/\d/.test(v);
-      const initOk = i.length === 1 && !/\d/.test(i);
+      // Nur Buchstaben (inkl. Umlaute, ß), keine Zahlen
+      const nameOk = /^[A-Za-zÄÖÜäöüß\s'-]+$/.test(v);
+      const initOk = /^[A-Za-zÄÖÜäöüß]$/.test(i);
       const btn = document.getElementById('btnReq');
       if (nameOk && initOk) {
         btn.disabled = false;
@@ -290,7 +293,6 @@
     }
 
     function requestCode() {
-      // Overlay anzeigen und Fehlermeldung zurücksetzen
       document.getElementById('errorBox3').textContent = '';
       document.getElementById('loadingOverlay').style.display = 'flex';
 
@@ -321,12 +323,8 @@
       document.querySelectorAll('.screen').forEach(s => {
         const sStep = +s.dataset.step;
         s.classList.toggle('active', sStep === step);
-        // Klasse-Screen nur für Schüler
-        if (sStep === 2) {
-          s.style.display = (mode === 'Schueler') ? '' : 'none';
-        }
+        if (sStep === 2) s.style.display = (mode === 'Schueler') ? '' : 'none';
       });
-      // Fortschrittsbalken: 4 Schritte → 3 Übergänge
       document.getElementById('progress').style.width = ((step - 1) / 3 * 100) + '%';
     }
 
