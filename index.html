@@ -187,11 +187,11 @@
       <!-- Schritt 1: Wer bist du? -->
       <div class="screen active" data-step="1">
         <p style="text-align:center;color:var(--text);font-weight:500;">
-          Wer bist du?
+          Was bist du?
         </p>
         <div class="buttons">
-          <button class="btn primary" onclick="choose('Schueler')">👩‍🎓 Schüler:innen</button>
-          <button class="btn primary" onclick="choose('Lehrer')">👨‍🏫 Lehrer:innen</button>
+          <button class="btn primary" onclick="choose('Schueler')">👩‍🎓 Schüler:in</button>
+          <button class="btn primary" onclick="choose('Lehrer')">👨‍🏫 Lehrer:in</button>
         </div>
       </div>
 
@@ -210,9 +210,9 @@
 
       <!-- Schritt 3: Vorname & Initiale -->
       <div class="screen" data-step="3">
-        <label for="vorname">Vorname (klein):</label>
+        <label for="vorname">Vorname:</label>
         <input id="vorname" type="text" oninput="validate()">
-        <label for="initial">Nachnamen‑Initiale (klein):</label>
+        <label for="initial">erster Buchstabe - Nachname:</label>
         <input id="initial" maxlength="1" oninput="validate()">
         <div class="buttons">
           <button class="btn secondary" onclick="prev()">← Zurück</button>
@@ -231,11 +231,11 @@
         <ol>
           <li>WLAN‑Einstellungen öffnen.</li>
           <li>Netzwerk <strong>CSS‑KA‑Gast</strong> wählen.</li>
-          <li>Login‑Maske abwarten.</li>
+          <li>auf Login‑Seite warten.</li>
           <li>Code einfügen und verbinden.</li>
-          <li>Bei Problemen: Netzwerk entfernen & neu verbinden.</li>
+          <li>Bei Problemen: Netzwerk in den Einstelllungen entfernen/ignorieren & neu verbinden.</li>
         </ol>
-        <div class="warning">Hinweis: Jede Person bekommt monatlich einen Code.</div>
+        <div class="warning">Hinweis: Die Anzahl an Codes Pro Klasse/Lehrkraft ist täglich begrenzt</div>
       </div>
 
     </div>
