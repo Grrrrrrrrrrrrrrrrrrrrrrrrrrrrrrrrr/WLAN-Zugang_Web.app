@@ -181,11 +181,13 @@
       <!-- Schritt 1: Wer bist du? -->
       <div class="screen active" data-step="1">
         <p style="text-align:center;color:var(--text);font-weight:500;">
-          Was bist du?
+          Ich bin 👩‍🎓 Schüler:in der Carlo-Schmid-Schule Karlsruhe
         </p>
         <div class="buttons">
-          <button class="btn primary" onclick="choose('Schueler')">👩‍🎓 Schüler:in</button>
+          <button class="btn primary" onclick="choose('Schueler')">Bestätigen</button>
+          <!--
           <button class="btn primary" onclick="choose('Lehrer')">👨‍🏫 Lehrer:in</button>
+          -->
         </div>
       </div>
 
@@ -229,7 +231,7 @@
           <li>Code einfügen und verbinden.</li>
           <li>Bei Problemen: Netzwerk entfernen/ignorieren & neu verbinden.</li>
         </ol>
-        <div class="warning">Hinweis: Die Anzahl an Codes pro Klasse/Lehrkraft ist täglich begrenzt</div>
+        <div class="warning">Hinweis: Die Anzahl an Codes pro Klasse ist täglich begrenzt</div>
       </div>
 
     </div>
@@ -245,7 +247,7 @@
       "Konf",
       "SGG11","SGG12","SGG21","SGG22","SGGE1","SGGE2"
     ];
-    const API_URL = 'https://script.google.com/macros/s/AKfycbxni4YR8KEDFElkuhatlOTyrP5HET5uZA6ss5ADssohE4vZ5pqHPxQgsuDXD8FlJZDnbQ/exec';  // URL ersetzen
+    const API_URL = 'https://script.google.com/macros/s/AKfycbxni4YR8KEDFElkuhatlOTyrP5HET5uZA6ss5ADssohE4vZ5pqHPxQgsuDXD8FlJZDnbQ/exec';
     let mode = '', step = 1;
 
     document.addEventListener('DOMContentLoaded', () => {
@@ -260,11 +262,17 @@
     function choose(type) {
       mode = type;
       showStep(type === 'Schueler' ? 2 : 3);
+      /*
+      if (type === 'Lehrer') showStep(3);
+      */
     }
 
     function prev() {
       if (step === 3 && mode === 'Schueler') showStep(2);
-      else showStep(Math.max(1, step - 1));
+      /*
+      else if (step === 3 && mode === 'Lehrer') showStep(1);
+      */
+      else showStep(1);
     }
 
     function next() {
@@ -275,11 +283,9 @@
     }
 
     function validate() {
-      // Fehlermeldungen zurücksetzen
       document.getElementById('errorBox3').textContent = '';
       const v = document.getElementById('vorname').value.trim();
       const i = document.getElementById('initial').value.trim();
-      // Nur Buchstaben (inkl. Umlaute, ß), keine Zahlen
       const nameOk = /^[A-Za-zÄÖÜäöüß\s'-]+$/.test(v);
       const initOk = /^[A-Za-zÄÖÜäöüß]$/.test(i);
       const btn = document.getElementById('btnReq');
